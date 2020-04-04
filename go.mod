@@ -1,5 +1,3 @@
-module gkd
+module github.com/bluechanel/gkd
 
-require gkd v0.0.0
-
-replace gkd => ./gkd
+go 1.12
