@@ -13,6 +13,8 @@ type Context struct {
 	// request信息,请求地址请求方法
 	Path string
 	Method string
+	// 路由中的参数
+	Params map[string]string
 	// write信息
 	StatusCode int
 }
@@ -24,6 +26,12 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context{
 		Path:       r.URL.Path,
 		Method:     r.Method,
 	}
+}
+
+// 路由从的参数
+func (context *Context) Param(key string) string{
+	value, _ : context.Params[key]
+	return value
 }
 
 // 调用该方法获取表单值
