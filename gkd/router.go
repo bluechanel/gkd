@@ -1,8 +1,8 @@
 package gkd
 
 import (
-	"log"
 	"net/http"
+	"strings"
 )
 
 type router struct {
@@ -13,7 +13,7 @@ type router struct {
 func NewRouter() *router{
 	return &router{
 		roots:make(map[string]*node),
-		handlers:make(map[string]HandlerFunc)
+		handlers:make(map[string]HandlerFunc),
 	}
 }
 
@@ -79,9 +79,9 @@ func (r *router) handle(context *Context){
 	n, params := r.getRoute(context.Method, context.Path)
 	if n != nil{
 		context.Params = params
-		key := context.Methods + "-" + n.pattern
-		r.handlers[key](c)
+		key := context.Method + "-" + n.pattern
+		r.handlers[key](context)
 	}else{
-		c.String(http.StatusNotFound, "404 not found %s\n", context.Path)
+		context.String(http.StatusNotFound, "404 not found %s\n", context.Path)
 	}
 }

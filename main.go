@@ -1,22 +1,26 @@
 package main
 
 import (
-	"fmt"
 	"github.com/bluechanel/gkd/gkd"
 	"net/http"
 )
 
 func main() {
 	r := gkd.New()
-	r.GET("/", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(w, "URL.Path = %q\n", req.URL.Path)
+	r.GET("/", func(c *gkd.Context) {
+		c.HTML(http.StatusOK, "<h1>hello gkd</h1>")
 	})
 
-	r.GET("/hello", func(w http.ResponseWriter, req *http.Request) {
-		for k, v := range req.Header {
-			fmt.Fprintf(w, "Header[%q] = %q\n", k, v)
-		}
+	r.GET("/hello", func(c *gkd.Context) {
+		c.String(http.StatusOK, "hello handler", c.Query("name"), c.Path)
 	})
 
+	r.GET("/hello/:name", func(c *gkd.Context) {
+		c.String(http.StatusOK,"hello %s, you're at %s\n", c.Param("name"), c.Path)
+	})
+
+	r.GET("assets/*filepath", func(c *gkd.Context) {
+		c.JSON(http.StatusOK, gkd.H{"filename":c.Param("filepath")})
+	})
 	r.Run(":9999")
 }
