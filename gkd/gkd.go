@@ -1,6 +1,7 @@
 package gkd
 
 import (
+	"log"
 	"net/http"
 )
 
@@ -9,26 +10,53 @@ type HandlerFunc func(*Context)
 
 // Engine implement the interface of ServeHTTP
 type Engine struct {
-	router *router
+	*RouterGroup	// 继承RouterGroup的属性
+	router *router	// 路由器
+	groups []*RouterGroup	// 路由组数组
 }
 
-// New is the constructor of gee.Engine
+// 路由组
+type RouterGroup struct {
+	prefix string  // 前缀
+	middleWares []HandlerFunc	// 中间件
+	parent *RouterGroup	// 支持分组嵌套
+	engine *Engine	// 所有的分组共享一个engine实例
+}
+// New is the constructor of gkd.Engine
+// 相当于调用的时候初始化
 func New() *Engine {
-	return &Engine{router: NewRouter()}
+	engine := &Engine{router:NewRouter()}	// 创建engine对象
+	engine.RouterGroup = &RouterGroup{	//
+		engine: engine,
+	}	// 初始化RouterGroup
+	engine.groups = []*RouterGroup{engine.RouterGroup}	// 初始化engine里面的路由分组
+	return engine
 }
 
-func (engine *Engine) addRoute(method string, pattern string, handler HandlerFunc) {
-	engine.router.addRoute(method, pattern, handler)
+func (group *RouterGroup) Group(prefix string) *RouterGroup{
+	engine := group.engine	// 初始化RouteGroup中的engine
+	newGroup := &RouterGroup{
+		prefix:      group.prefix + prefix,	// 组装前缀
+		parent:      group,
+		engine:      engine,
+	}
+	engine.groups = append(engine.groups, newGroup)	// 将新的带有prefix前缀group放入engine的group数组中
+	return newGroup
+}
+func (group *RouterGroup) addRoute(method string, comp string, handler HandlerFunc) {
+	pattern := group.prefix + comp
+	log.Printf("Route %4s - %s", method, pattern)// 组装pattern
+	group.engine.router.addRoute(method, pattern, handler)
 }
 
 // GET defines the method to add GET request
-func (engine *Engine) GET(pattern string, handler HandlerFunc) {
-	engine.addRoute("GET", pattern, handler)
+func (group *RouterGroup) GET(pattern string, handler HandlerFunc) {
+	group.addRoute("GET", pattern, handler)
 }
 
 // POST defines the method to add POST request
-func (engine *Engine) POST(pattern string, handler HandlerFunc) {
-	engine.addRoute("POST", pattern, handler)
+func (group *RouterGroup) POST(pattern string, handler HandlerFunc) {
+	group.addRoute("POST", pattern, handler)
 }
 
 // Run defines the method to start a http server
