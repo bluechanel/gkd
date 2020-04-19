@@ -1,9 +1,20 @@
 package main
 
+import "C"
 import (
 	"github.com/bluechanel/gkd/gkd"
+	"log"
 	"net/http"
+	"time"
 )
+
+func onlyV2() gkd.HandlerFunc {
+	return func(context *gkd.Context) {
+		t := time.Now()
+		// context.Fail(500, "Internal Server Error")
+		log.Printf("[%d] %s in %v for group v2",context.StatusCode, context.Request.RequestURI, time.Since(t))
+	}
+}
 
 func main() {
 	r := gkd.New()
@@ -22,6 +33,7 @@ func main() {
 		})
 	}
 	v2 := r.Group("/v2")
+	v2.Use(onlyV2())
 	{
 		v2.GET("/hello/:name", func(c *gkd.Context) {
 			// expect /hello*gkdktutu

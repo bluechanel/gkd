@@ -17,6 +17,9 @@ type Context struct {
 	Params map[string]string
 	// write信息
 	StatusCode int
+	// 中间件
+	handlers []HandlerFunc
+	index int
 }
 
 type H map[string]interface{}
@@ -27,9 +30,17 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context{
 		Request:    r,
 		Path:       r.URL.Path,
 		Method:     r.Method,
+		index: -1,
 	}
 }
 
+func (context *Context) Next() {
+	context.index++
+	s := len(context.handlers)
+	for ; context.index < s; context.index++ {
+		context.handlers[context.index](context)
+	}
+}
 // 路由从的参数
 func (context *Context) Param(key string) string{
 	value, _ := context.Params[key]
