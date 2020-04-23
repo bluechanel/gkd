@@ -41,6 +41,11 @@ func (context *Context) Next() {
 		context.handlers[context.index](context)
 	}
 }
+
+func (context *Context) Fail(code int,err string) {
+	context.index = len(context.handlers)
+	context.JSON(code, H{"message": err})
+}
 // 路由从的参数
 func (context *Context) Param(key string) string{
 	value, _ := context.Params[key]
